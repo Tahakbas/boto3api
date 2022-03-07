@@ -1,4 +1,5 @@
-from flask import Flask, jsonify
+import re
+from flask import Flask, jsonify, request
 from config import config
 import boto3
 import logging
@@ -11,7 +12,7 @@ session = boto3.Session(aws_access_key_id=config['AWS_ACCESS_KEY'],aws_secret_ac
 
 #Logs are written to file
 #logging.basicConfig(
-#    filename=config['LOG_FILE'], 
+#cd    filename=config['LOG_FILE'], 
 #   level=config['LOG_LEVEL']
 #)
 #Error status
@@ -71,46 +72,115 @@ def instance_detail_list():
 
 
 #Instance start page
-@app.route("/ec2/start",methods = ['GET'] )
+@app.route("/ec2/start",methods = ['GET','POST'] )
 def start_instance():
-
-    instance_array = instanceId_factory()
+    
     ec2 = session.client('ec2')
     response = []
 
-    for i in range(len(instance_array)):
-        try:
-            response.append(ec2.start_instances(
-                InstanceIds = [instance_array[i]]
-            ))
-        except ClientError as e:
-            if e.response['Error']['Code'] == 'UnauthorizedOperation':
-                return "UnauthorizedOperation Error"
-            else:
-                return "Unexpected error"
-    return jsonify(response)
+    if request.method == 'POST':
+        id =  request.args.get("id")
+        if id != None:
+            try:
+                response.append(ec2.start_instances(
+                    InstanceIds = [id]
+                ))
+            except ClientError as e:
+                if e.response['Error']['Code'] == 'UnauthorizedOperation':
+                    return "UnauthorizedOperation Error"
+                else:
+                    return "Unexpected error"
+            return jsonify(response)
+            
+    elif request.method == 'GET':
+        instance_array = instanceId_factory()
+        for i in range(len(instance_array)):
+            try:
+                response.append(ec2.start_instances(
+                    InstanceIds = [instance_array[i]]
+                ))
+            except ClientError as e:
+                if e.response['Error']['Code'] == 'UnauthorizedOperation':
+                    return "UnauthorizedOperation Error"
+                else:
+                    return "Unexpected error"
+        return jsonify(response)
+
+
+@app.route("/ec2/start/<id>",methods = ['POST'] )
+def start_instance_url(id):
+
+    response = []
+    ec2 = session.client('ec2')
+  
+    try:
+        response.append(ec2.start_instances(
+            InstanceIds = [id]
+        ))
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'UnauthorizedOperation':
+            return "UnauthorizedOperation Error"
+        else:
+            return "Unexpected error"
+
+    return jsonify(response)   
 
 
 #Instance stop page
-@app.route("/ec2/stop",methods = ['GET'] )
+@app.route("/ec2/stop",methods = ['GET','POST'] )
 def stop_instance():
 
-    instance_array = instanceId_factory()
     response = []
     ec2 = session.client('ec2')
 
-    for i in range(len(instance_array)):
-        try:
-            response.append(ec2.stop_instances(
-                InstanceIds = [instance_array[i]]
-            ))
-        except ClientError as e:
-            if e.response['Error']['Code'] == 'UnauthorizedOperation':
-                return "UnauthorizedOperation Error"
-            else:
-                return "Unexpected error"
+    if request.method == 'POST':
+        id = request.args.get("id")
+        if id != None:
+            try:
+                response.append(ec2.stop_instances(
+                    InstanceIds = [id]
+                ))
+            except ClientError as e:
+                if e.response['Error']['Code'] == 'UnauthorizedOperation':
+                    return "UnauthorizedOperation Error"
+                else:
+                    return "Unexpected error"
+            return jsonify(response)
+
+    elif request.method == 'GET':
+        instance_array = instanceId_factory()
+        for i in range(len(instance_array)):
+            try:
+                response.append(ec2.stop_instances(
+                    InstanceIds = [instance_array[i]]
+                ))
+            except ClientError as e:
+                if e.response['Error']['Code'] == 'UnauthorizedOperation':
+                    return "UnauthorizedOperation Error"
+                else:
+                    return "Unexpected error"
+
+        return jsonify(response)   
+
+
+@app.route("/ec2/stop/<id>",methods = ['POST'] )
+def stop_instance_url(id):
+
+    response = []
+    ec2 = session.client('ec2')
+  
+    try:
+        response.append(ec2.stop_instances(
+            InstanceIds = [id]
+        ))
+    except ClientError as e:
+        if e.response['Error']['Code'] == 'UnauthorizedOperation':
+            return "UnauthorizedOperation Error"
+        else:
+            return "Unexpected error"
 
     return jsonify(response)   
+
 
 if __name__ == "__main__":
     app.run(host=config["HOST"],debug=config["DEBUG"],port=config["PORT"])

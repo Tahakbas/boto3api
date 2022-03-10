@@ -23,7 +23,13 @@
  - - Go to `http://<api_host>:<api_port>/ec2/list`
  - Instance's detail
  - - Go to `http://<api_host>:<api_port>/ec2/list/detail`
+ - - Go to `http://<api_host>:<api_port>/ec2/list/detail?id=<instance_id>`
+ - - Go to `http://<api_host>:<api_port>/ec2/list/detail/<instance_id>`
  - Start Instance
  - - Go to `http://<api_host>:<api_port>/ec2/start`
+ - - Go to `http://<api_host>:<api_port>/ec2/start?id=<instance_id>`
+ - - Go to `http://<api_host>:<api_port>/ec2/start/<instance_id>`
  - Stop Instance
- - - Go to ` http://<api_host>:<api_port>/ec2/stop`
+ - - Go to `http://<api_host>:<api_port>/ec2/stop`
+ - - Go to `http://<api_host>:<api_port>/ec2/stop?id=<instance_id>`
+ - - Go to `http://<api_host>:<api_port>/ec2/stop?id=<instance_id>`

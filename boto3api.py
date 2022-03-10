@@ -11,10 +11,10 @@ app = Flask(__name__)
 session = boto3.Session(aws_access_key_id=config['AWS_ACCESS_KEY'],aws_secret_access_key=config['AWS_SECRET_KEY'],region_name=config['AWS_REGION'])
 
 #Logs are written to file
-#logging.basicConfig(
-#cd    filename=config['LOG_FILE'], 
-#   level=config['LOG_LEVEL']
-#)
+logging.basicConfig(
+   filename=config['LOG_FILE'], 
+   level=config['LOG_LEVEL']
+)
 #Error status
 @app.errorhandler(404)
 def page_not_found(error):
@@ -55,23 +55,57 @@ def instance_list():
     return jsonify(instance_array)
     
     
-#Instance detail page   
-@app.route("/ec2/list/detail",methods = ['GET'])
+#Instance detail page and query parameters  
+@app.route("/ec2/list/detail",methods = ['GET','POST'])
 def instance_detail_list():
 
     ec2 = session.client('ec2')
 
+    if request.method == 'POST':
+        id = request.args.get('id')
+        try:
+            response = ec2.describe_instances(
+                InstanceIds=[id]
+            )
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'UnauthorizedOperation':
+                    return "UnauthorizedOperation Error"
+            else:
+                    return "Unexpected error"
+        return jsonify(response)
+
+    elif request.method == 'GET':
+        try:
+            response = ec2.describe_instances()
+        except ClientError as e:
+            if e.response['Error']['Code'] == 'UnauthorizedOperation':
+                    return "UnauthorizedOperation Error"
+            else:
+                    return "Unexpected error"
+        return jsonify(response)
+        
+
+#instance list with url parameters
+@app.route("/ec2/list/detail/<id>",methods = ['GET','POST'])
+def instance_detail_list_url(id):
+
+    ec2 = session.client('ec2')
+
     try:
-        response = ec2.describe_instances()
+        response = ec2.describe_instances(
+            InstanceIds=[id]
+        )
     except ClientError as e:
         if e.response['Error']['Code'] == 'UnauthorizedOperation':
                 return "UnauthorizedOperation Error"
         else:
                 return "Unexpected error"
-    return jsonify(response) 
+    return jsonify(response)
 
 
-#Instance start page
+
+
+#Instance start page and query parameter
 @app.route("/ec2/start",methods = ['GET','POST'] )
 def start_instance():
     
@@ -91,7 +125,8 @@ def start_instance():
                 else:
                     return "Unexpected error"
             return jsonify(response)
-            
+
+
     elif request.method == 'GET':
         instance_array = instanceId_factory()
         for i in range(len(instance_array)):
@@ -106,8 +141,8 @@ def start_instance():
                     return "Unexpected error"
         return jsonify(response)
 
-
-@app.route("/ec2/start/<id>",methods = ['POST'] )
+# instance start with url parameter
+@app.route("/ec2/start/<id>",methods = ['GET','POST'] )
 def start_instance_url(id):
 
     response = []
@@ -126,7 +161,7 @@ def start_instance_url(id):
     return jsonify(response)   
 
 
-#Instance stop page
+#Instance stop page and query parameter
 @app.route("/ec2/stop",methods = ['GET','POST'] )
 def stop_instance():
 
@@ -146,7 +181,7 @@ def stop_instance():
                 else:
                     return "Unexpected error"
             return jsonify(response)
-
+            
     elif request.method == 'GET':
         instance_array = instanceId_factory()
         for i in range(len(instance_array)):
@@ -162,8 +197,8 @@ def stop_instance():
 
         return jsonify(response)   
 
-
-@app.route("/ec2/stop/<id>",methods = ['POST'] )
+# instance stop with url parameter
+@app.route("/ec2/stop/<id>",methods = ['GET','POST'] )
 def stop_instance_url(id):
 
     response = []
